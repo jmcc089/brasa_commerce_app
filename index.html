@@ -300,7 +300,7 @@
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://mjfvjogsknnuizsoygpp.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qZnZqb2dza25udWl6c295Z3BwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NzM2MjUsImV4cCI6MjA5NTA0OTYyNX0.vVnVSTjOhOVuLMIiV-23VFUiAvbE5Ib2UE_eZfMqflc';
-
+const APPROVE_WEBHOOK = 'https://n8n-production-3503.up.railway.app/webhook/brasa-approve';  // ← add this line
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let tickets       = [];
 let customers     = {};
@@ -522,18 +522,27 @@ async function renderDetail(ticket) {
 // ── APPROVE ───────────────────────────────────────────────────────────────────
 async function approveTicket(id) {
   const reply = document.getElementById('reply-ta')?.value || '';
+  if (!reply.trim()) { showToast('Reply is empty — nothing to send', 'error'); return; }
+  const ticket = tickets.find(t => t.id === id);
+  const c = ticket ? (customers[ticket.customer_id] || {}) : {};
   try {
-    await sb(`bc_support_tickets?id=eq.${id}`, {
-      method: 'PATCH',
-      prefer: 'return=minimal',
-      body: JSON.stringify({ final_reply: reply, status: 'approved', updated_at: new Date().toISOString() })
+    const res = await fetch(APPROVE_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ticket_id: id,
+        customer_email: c.email || '',
+        customer_name: c.full_name || 'there',
+        final_reply: reply
+      })
     });
-    showToast('Ticket approved and saved', 'success');
+    if (!res.ok) throw new Error('Webhook returned ' + res.status);
+    showToast('Approved — reply sent to customer', 'success');
     await loadTickets();
     const updated = tickets.find(t => t.id === id);
     if (updated) renderDetail(updated);
-  } catch(e) {
-    showToast('Failed to approve: ' + e.message, 'error');
+  } catch (e) {
+    showToast('Failed to approve/send: ' + e.message, 'error');
   }
 }
 
