@@ -392,9 +392,6 @@ function renderList() {
     const date = dt.toLocaleDateString([], { month: 'short', day: 'numeric' });
     const preview = (t.raw_message || '').slice(0, 72) + ((t.raw_message || '').length > 72 ? '…' : '');
     const intentBadge = intentBadgeHtml(t.intent);
-    const chanBadge   = t.channel === 'instagram'
-      ? `<span class="badge b-channel-ig">📸 IG</span>`
-      : `<span class="badge b-channel">✉️ Email</span>`;
     const escTag = t.escalate_flag && t.status === 'draft' ? `<span class="badge b-esc">⚑ ESC</span>` : '';
 
     return `<div class="ticket-item ${selectedId === t.id ? 'active' : ''}" onclick="selectTicket('${t.id}')">
@@ -459,7 +456,6 @@ async function renderDetail(ticket) {
       </div>
       <div class="dh-row2">
         ${intentBadgeHtml(ticket.intent)}
-        ${ticket.channel === 'instagram' ? '<span class="badge b-channel-ig">📸 Instagram</span>' : '<span class="badge b-channel">✉️ Email</span>'}
         <span class="badge b-${ticket.status}">${ticket.status}</span>
         ${ticket.escalate_flag ? '<span class="badge b-esc">⚑ Escalate</span>' : ''}
       </div>
